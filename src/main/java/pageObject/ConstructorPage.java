@@ -2,6 +2,7 @@ package pageObject;
 
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
@@ -54,5 +55,22 @@ public class ConstructorPage {
     public void waitForPageLoad() {
         new WebDriverWait(driver, Duration.ofSeconds(10))
                 .until(ExpectedConditions.visibilityOfElementLocated(bunsSection));
+    }
+
+    public void waitForSectionActive(String sectionName, long timeoutSeconds) {
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(timeoutSeconds));
+
+        By sectionLocator = switch (sectionName) {
+            case "Булки" -> bunsSection;
+            case "Соусы" -> saucesSection;
+            case "Начинки" -> fillingsSection;
+            default -> throw new IllegalArgumentException("Неизвестный раздел: " + sectionName);
+        };
+
+        wait.until(driver -> {
+            WebElement sectionElement = driver.findElement(sectionLocator);
+            String classAttribute = sectionElement.getAttribute("class");
+            return classAttribute != null && classAttribute.contains("tab_tab_type_current");
+        });
     }
 }

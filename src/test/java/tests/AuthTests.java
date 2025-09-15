@@ -44,45 +44,54 @@ public class AuthTests {
         });
     }
 
+    private static final String TOO_SHORT_PASSWORD = "12345";
+
     @Test
     @DisplayName("Регистрация с некорректным паролем (менее 6 символов)")
     public void registrationWithInvalidPassword() {
-        CreateUserRequest user = UserGenerator.randomUser().withPassword("12345");
+        CreateUserRequest user = UserGenerator.randomUser().withPassword(TOO_SHORT_PASSWORD);
 
         RegistrationPage registrationPage = new RegistrationPage(browserExtension.getDriver());
 
         step("Открыть страницу регистрации", () -> registrationPage.open().waitForPageLoad());
-        step("Заполнить форму с некорректным паролем и кликнуть на кнопку", () -> {
-            registrationPage.enterName(user.getName())
-                    .enterEmail(user.getEmail())
-                    .enterPassword(user.getPassword())
-                    .clickRegister();
-        });
+        step("Заполнить форму с некорректным паролем и кликнуть на кнопку", registrationPage.enterName(user.getName())
+                .enterEmail(user.getEmail())
+                .enterPassword(user.getPassword())::clickRegister);
         step("Проверить сообщение об ошибке", () -> {
             assertTrue(registrationPage.isPasswordErrorDisplayed());
             assertEquals("Некорректный пароль", registrationPage.getPasswordError());
         });
     }
 
+    public static class TestConstants {
+
+        public static final String INVALID_EMAIL_NO_AT = "testexample.com";
+        public static final String INVALID_EMAIL_NO_DOMAIN = "test@";
+        public static final String INVALID_EMAIL_INVALID_DOMAIN = "test@invalid";
+    }
+
     @ParameterizedTest
     @CsvSource({
-            "test@, Некорректный email",
-            "test, Некорректный email"
+            "Email без @ символа, " + TestConstants.INVALID_EMAIL_NO_AT + ", Некорректный email",
+            "Email без домена, " + TestConstants.INVALID_EMAIL_NO_DOMAIN + ", Некорректный email",
+            "Email с невалидным доменом, " + TestConstants.INVALID_EMAIL_INVALID_DOMAIN + ", Некорректный email"
     })
     @DisplayName("Регистрация с некорректным email")
-    public void registrationWithInvalidEmail(String email, String expectedError) {
+    public void registrationWithInvalidEmail(String testCase, String invalidEmail, String expectedError) {
+
+        CreateUserRequest user = UserGenerator.randomUser()
+                .withEmail(invalidEmail);
+
         RegistrationPage registrationPage = new RegistrationPage(browserExtension.getDriver());
 
-        step("Открыть страницу регистрации", () -> registrationPage.open().waitForPageLoad());
-        step("Ввести некорректный email: " + email, () ->
-                registrationPage.enterEmail(email)
-        );
-        step("Проверить сообщение об ошибке", () -> {
-            registrationPage.enterName("Test User");
-            registrationPage.enterPassword("validPassword123");
+        step("Открыть страницу регистрации: " + testCase, () -> registrationPage.open().waitForPageLoad());
+        step("Ввести некорректный email: " + testCase, () -> {
+            registrationPage.enterEmail(user.getEmail());
+            registrationPage.enterName(user.getName());
+            registrationPage.enterPassword(user.getPassword());
             registrationPage.clickRegister();
-            assertTrue(registrationPage.isErrorMessageDisplayed());
         });
+        step("Проверить сообщение об ошибке для: " + testCase, () -> assertTrue(registrationPage.isErrorMessageDisplayed()));
     }
 
     @Test
@@ -120,9 +129,7 @@ public class AuthTests {
                     .enterPassword("wrongpassword");
         });
         step("Нажать кнопку входа", loginPage::clickLogin);
-        step("Проверить страницу входа", () -> {
-            assertTrue(loginPage.isLoginButtonDisplayed());
-        });
+        step("Проверить страницу входа", () -> assertTrue(loginPage.isLoginButtonDisplayed()));
     }
 
     @Test

@@ -4,6 +4,7 @@ import clients.ApiClient;
 import extensions.BrowserExtension;
 import generators.UserGenerator;
 import model.CreateUserRequest;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -19,6 +20,19 @@ public class NavigationTests {
 
     @RegisterExtension
     public BrowserExtension browserExtension = new BrowserExtension();
+
+    private CreateUserRequest currentUser;
+    private ApiClient apiClient;
+
+    @AfterEach
+    public void cleanup() {
+        if (currentUser != null && apiClient != null) {
+            step("Очистка: удаление тестового пользователя", () -> {
+                apiClient.users().delete();
+                currentUser = null;
+            });
+        }
+    }
 
     @Test
     @DisplayName("Переход в личный кабинет авторизованным пользователем")
@@ -42,8 +56,6 @@ public class NavigationTests {
             profilePage.waitForPageLoad();
             assertTrue(profilePage.isProfilePageDisplayed());
         });
-
-        apiClient.users().delete();
     }
 
     @Test
@@ -84,8 +96,6 @@ public class NavigationTests {
             constructorPage.waitForPageLoad();
             assertTrue(constructorPage.isBunsListDisplayed());
         });
-
-        apiClient.users().delete();
     }
 
     @Test
@@ -106,7 +116,5 @@ public class NavigationTests {
             constructorPage.waitForPageLoad();
             assertTrue(constructorPage.isBunsListDisplayed());
         });
-
-        apiClient.users().delete();
     }
 }
